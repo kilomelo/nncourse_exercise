@@ -195,7 +195,8 @@ def modelWithInitialWB(
     Returns:
     d -- dictionary containing information about the model.
     """
-
+    print(initial_w.shape)
+    print(X_train.shape)
     assert(initial_w.shape == (X_train.shape[0], 1))
     assert(initial_b.dtype == float)
 
