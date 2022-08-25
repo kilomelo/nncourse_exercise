@@ -1,5 +1,6 @@
 from os import listdir
 from os import path
+import warnings
 
 def getAllImageInfo(dir, extensions = ['.jpg', '.png'], recursive = False):
     """
@@ -33,3 +34,23 @@ def getAllImageInfo(dir, extensions = ['.jpg', '.png'], recursive = False):
             allImageFullPath += allImageFullPathInChildDir
             allImageNamesWithExtension += allImageNamesWithExtension
     return allImageNames, allImageFullPath, allImageNamesWithExtension
+
+def save2File(object, filePath):
+    import pickle
+    with open(filePath, 'wb') as f: pickle.dump(object, f, pickle.HIGHEST_PROTOCOL)
+def loadFromeFile(filePath):
+    import pickle
+    if not path.isfile(filePath):
+        warnings.warn("file not find at [{0}]".format(filePath))
+        return None
+    else:
+        with open(filePath, 'rb') as f: return pickle.load(f)
+
+def strProgress(current, total, displayBlockCnt = 50):
+    import math
+    current = total if current > total else current
+    completedBlockCnt = math.floor(current / total * displayBlockCnt)
+    resultStr = '['
+    for i in range(completedBlockCnt): resultStr += '#'
+    for i in range(displayBlockCnt - completedBlockCnt): resultStr += '.'
+    return resultStr + ']'

@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 def sigmoid(z):
     """
@@ -11,9 +12,7 @@ def sigmoid(z):
     s -- sigmoid(z)
     """
 
-    s = 1.0 / (1.0 + np.exp(-1.0 * z))
-    
-    return s
+    return 1.0 / (1.0 + np.exp(-1.0 * z))
 
 def initialize_with_zeros(dim):
     """
@@ -35,7 +34,7 @@ def initialize_with_zeros(dim):
     
     return w, b
 
-def propagate(w, b, X, Y):
+def propagate(w, b, X, Y, iterCnt):
     """
     Implement the cost function and its gradient for the propagation explained above
 
@@ -53,12 +52,11 @@ def propagate(w, b, X, Y):
     Tips:
     - Write your code step by step for the propagation. np.log(), np.dot()
     """
-    
     m = X.shape[1]
     
     A = sigmoid(np.dot(w.T, X) + b)
+    assert(1.0 not in A)
     cost = -(1.0 / m) * np.sum(Y * np.log(A) + (1 - Y) * np.log(1 - A))
-    
     dw = (1.0 / m) * np.dot(X, (A - Y).T)
     db = (1.0 / m) * np.sum(A - Y)
 
@@ -72,7 +70,7 @@ def propagate(w, b, X, Y):
     
     return grads, cost
 
-def optimize(w, b, X, Y, num_iterations, learning_rate, print_cost = False):
+def optimize(w, b, X, Y, num_iterations, learning_rate, cost_record_cnt = 10, print_cost = False):
     """
     This function optimizes w and b by running a gradient descent algorithm
     
@@ -95,32 +93,36 @@ def optimize(w, b, X, Y, num_iterations, learning_rate, print_cost = False):
         1) Calculate the cost and the gradient for the current parameters. Use propagate().
         2) Update the parameters using gradient descent rule for w and b.
     """
-    
+    import utils
+
     costs = []
+
+    recordCostInterval = math.floor(num_iterations / cost_record_cnt)
     
     for i in range(num_iterations):
         
         
-        grads, cost = propagate(w, b, X, Y)
+        grads, cost = propagate(w, b, X, Y, i)
 
         dw = grads["dw"]
         db = grads["db"]
         
         w = w - learning_rate * dw
         b = b - learning_rate * db
-        if i % 100 == 0:
+        if i % recordCostInterval == 0:
             costs.append(cost)
-        
-        if print_cost and i % 100 == 0:
-            print ("Cost after iteration %i: %f" %(i, cost))
+            if print_cost:
+                print ("Progress: %s cost: %.4f" % (utils.strProgress(i, num_iterations), cost))
     
     params = {"w": w,
               "b": b}
     
     grads = {"dw": dw,
              "db": db}
+
+    costDelta = costs[-1] - costs[0]
     
-    return params, grads, costs
+    return params, grads, costs, costDelta
 
 def predict(w, b, X):
     '''
@@ -170,8 +172,37 @@ def model(X_train, Y_train, X_test, Y_test, num_iterations = 2000, learning_rate
     """
     
     w, b = initialize_with_zeros(X_train.shape[0])
+    return modelWithInitialWB(X_train, Y_train, X_test, Y_test, w, b, num_iterations, learning_rate, print_cost)
 
-    parameters, grads, costs = optimize(w, b, X_train, Y_train, num_iterations, learning_rate, print_cost)
+
+def modelWithInitialWB(
+    X_train, Y_train, X_test, Y_test, initial_w, initial_b,
+    num_iterations = 2000, learning_rate = 0.5,
+    cost_record_cnt = 10, print_cost = False):
+    """
+    Builds the logistic regression model by calling the function you've implemented previously
+    
+    Arguments:
+    X_train -- training set represented by a numpy array of shape (num_px * num_px * 3, m_train)
+    Y_train -- training labels represented by a numpy array (vector) of shape (1, m_train)
+    X_test -- test set represented by a numpy array of shape (num_px * num_px * 3, m_test)
+    Y_test -- test labels represented by a numpy array (vector) of shape (1, m_test)
+    num_iterations -- hyperparameter representing the number of iterations to optimize the parameters
+    learning_rate -- hyperparameter representing the learning rate used in the update rule of optimize()
+    cost_record_cnt -- cost data record count
+    print_cost -- Set to true to print the cost every 100 iterations
+    
+    Returns:
+    d -- dictionary containing information about the model.
+    """
+
+    assert(initial_w.shape == (X_train.shape[0], 1))
+    assert(initial_b.dtype == float)
+
+    w = initial_w
+    b = initial_b
+
+    parameters, grads, costs, costDelta = optimize(w, b, X_train, Y_train, num_iterations, learning_rate, cost_record_cnt, print_cost)
 
     
     w = parameters["w"]
@@ -181,8 +212,11 @@ def model(X_train, Y_train, X_test, Y_test, num_iterations = 2000, learning_rate
     Y_prediction_train = predict(w, b, X_train)
 
 
-    print("train accuracy: {} %".format(100 - np.mean(np.abs(Y_prediction_train - Y_train)) * 100))
-    print("test accuracy: {} %".format(100 - np.mean(np.abs(Y_prediction_test - Y_test)) * 100))
+    trainAccuracy = 100 - np.mean(np.abs(Y_prediction_train - Y_train)) * 100
+    print('train accuracy: %.3f %%' % trainAccuracy)
+    testAccuracy = 100 - np.mean(np.abs(Y_prediction_test - Y_test)) * 100
+    print('test accuracy: %.3f %%' % testAccuracy)
+    print('cost delta: %.5f' % costDelta)
 
     
     d = {"costs": costs,
@@ -191,6 +225,8 @@ def model(X_train, Y_train, X_test, Y_test, num_iterations = 2000, learning_rate
          "w" : w, 
          "b" : b,
          "learning_rate" : learning_rate,
-         "num_iterations": num_iterations}
+         "num_iterations": num_iterations,
+         "trainAccuracy": trainAccuracy,
+         "testAccuracy": testAccuracy}
     
     return d
