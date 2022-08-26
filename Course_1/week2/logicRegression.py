@@ -26,7 +26,7 @@ def initialize_with_zeros(dim):
     b -- initialized scalar (corresponds to the bias)
     """
     
-    w = np.zeros((dim,1))
+    w = np.zeros((dim,1), dtype="float64")
     b = 0
 
     assert(w.shape == (dim, 1))
@@ -55,13 +55,24 @@ def propagate(w, b, X, Y, iterCnt):
     m = X.shape[1]
     
     A = sigmoid(np.dot(w.T, X) + b)
-    assert(1.0 not in A)
+    
+    # assert(1.0 not in A)
+    if 1.0 in A:
+
+        print('itor cnt: %d' % iterCnt)
+        print('w: {} {}'.format(type(w[0,0]), w.shape))
+        print('b: {}'.format(type(b)))
+        print('X: {} {}'.format(type(X[0,0]), X.shape))
+        print('Y: {} {}'.format(type(Y[0,0]), Y.shape))
+
+
+
     cost = -(1.0 / m) * np.sum(Y * np.log(A) + (1 - Y) * np.log(1 - A))
     dw = (1.0 / m) * np.dot(X, (A - Y).T)
     db = (1.0 / m) * np.sum(A - Y)
 
     assert(dw.shape == w.shape)
-    assert(db.dtype == float)
+    assert(db.dtype == np.float64)
     cost = np.squeeze(cost)
     assert(cost.shape == ())
     
@@ -97,7 +108,7 @@ def optimize(w, b, X, Y, num_iterations, learning_rate, cost_record_cnt = 10, pr
 
     costs = []
 
-    recordCostInterval = math.floor(num_iterations / cost_record_cnt)
+    recordCostInterval = max(math.floor(num_iterations / cost_record_cnt), 1)
     
     for i in range(num_iterations):
         
@@ -112,7 +123,7 @@ def optimize(w, b, X, Y, num_iterations, learning_rate, cost_record_cnt = 10, pr
         if i % recordCostInterval == 0:
             costs.append(cost)
             if print_cost:
-                print ("Progress: %s cost: %.4f" % (utils.strProgress(i, num_iterations), cost))
+                print ("Progress: %s cost: %.4f" % (utils.strProgress(i, num_iterations, 50), cost))
     
     params = {"w": w,
               "b": b}
@@ -195,10 +206,7 @@ def modelWithInitialWB(
     Returns:
     d -- dictionary containing information about the model.
     """
-    print(initial_w.shape)
-    print(X_train.shape)
     assert(initial_w.shape == (X_train.shape[0], 1))
-    assert(initial_b.dtype == float)
 
     w = initial_w
     b = initial_b
