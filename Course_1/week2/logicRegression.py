@@ -92,6 +92,7 @@ def optimize(w, b, X, Y, num_iterations, learning_rate, cost_record_cnt = 10, pr
     Y -- true "label" vector (containing 0 if non-cat, 1 if cat), of shape (1, number of examples)
     num_iterations -- number of iterations of the optimization loop
     learning_rate -- learning rate of the gradient descent update rule
+    cost_record_cnt -- cost data record count
     print_cost -- True to print the loss every 100 steps
     
     Returns:
@@ -107,7 +108,7 @@ def optimize(w, b, X, Y, num_iterations, learning_rate, cost_record_cnt = 10, pr
     import utils
 
     costs = []
-
+    if cost_record_cnt <= 0: cost_record_cnt = num_iterations
     recordCostInterval = max(math.floor(num_iterations / cost_record_cnt), 1)
     
     for i in range(num_iterations):
@@ -123,7 +124,7 @@ def optimize(w, b, X, Y, num_iterations, learning_rate, cost_record_cnt = 10, pr
         if i % recordCostInterval == 0:
             costs.append(cost)
             if print_cost:
-                print ("Progress: %s cost: %.4f" % (utils.strProgress(i, num_iterations, 50), cost))
+                print ("Progress: %s cost: %.4f" % (utils.strProgress(i, num_iterations, 20), cost))
     
     params = {"w": w,
               "b": b}
