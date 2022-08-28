@@ -3,6 +3,7 @@ import numpy as np
 import sklearn
 import sklearn.datasets
 import sklearn.linear_model
+import sys
 
 def plot_decision_boundary(model, X, y):
     # Set min and max values and give it some padding
@@ -31,8 +32,13 @@ def sigmoid(x):
     Return:
     s -- sigmoid(x)
     """
+    x -= (x <= -709) * (x + 709)
     s = 1/(1+np.exp(-x))
+    s -= (s == 1.) * sys.float_info.epsilon
     return s
+
+def reLU(x):
+    return x * (x > 0)
 
 def load_planar_dataset():
     np.random.seed(1)
